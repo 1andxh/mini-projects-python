@@ -10,6 +10,31 @@ while True:
     incoming_connection, client_address = conn.accept()
     bytes_recv = incoming_connection.recv(256)
 
+    def parse_request(bytes_recv):
+        decoded = bytes_recv.decode()
+        head, _, body = decoded.partition("\r\n\r\n")
+        lines = head.split("\r\n")
+
+        request_line = lines[0]
+        method, path, version = request_line.split(" ")
+
+        headers = {}
+        for line in lines[1:]:
+            k, v = line.split(": ", 1)
+            headers[k] = v
+
+        return{
+            "method": method,
+            "path": path,
+            "version": version,
+            "headers": headers,
+            "body": body
+        }
+    
+    parsed = parse_request(bytes_recv)
+    print(parsed)
+
+    
     body = "hello\n"
     content_length = len(body)
     
