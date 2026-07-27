@@ -34,11 +34,19 @@ while True:
     parsed = parse_request(bytes_recv)
     print(parsed)
 
-    
-    body = "hello\n"
+    if parsed["path"] == "/":
+        body = "Welcome home"
+        status = "200 OK"
+    elif parsed["path"] == "/about":
+        body = "About this server"
+        status = "200 OK"
+    else:
+        body = "404 Not Found"
+        status = "404 NOT FOUND"
+
     content_length = len(body)
     
-    response = f'HTTP/1.1 200 OK\r\nContent-Length: {content_length-1}\r\n\r\n{body}'
+    response = f'HTTP/1.1 {status}\r\nContent-Length: {content_length}\r\n\r\n{body}'
     encoded_resp = response.encode()
 
 
