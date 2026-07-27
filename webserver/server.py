@@ -1,4 +1,5 @@
 import socket
+import time
 
 conn = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
 
@@ -8,6 +9,9 @@ conn.listen(1)
 
 while True:
     incoming_connection, client_address = conn.accept()
+
+    time.sleep(5)  # simulate blocking
+
     bytes_recv = incoming_connection.recv(256)
 
     def parse_request(bytes_recv):
@@ -34,15 +38,19 @@ while True:
     parsed = parse_request(bytes_recv)
     print(parsed)
 
-    if parsed["path"] == "/":
+    if parsed["path"] == "/" and parsed["method"] == "GET":
         body = "Welcome home"
         status = "200 OK"
-    elif parsed["path"] == "/about":
+    elif parsed["path"] == "/about" and parsed["method"] == "GET":
         body = "About this server"
         status = "200 OK"
+    elif parsed["path"] == "/" and parsed["method"] == "POST":
+        body = ""
+        status = "201 Created"
     else:
         body = "404 Not Found"
-        status = "404 NOT FOUND"
+        status = "404 Not Found"
+
 
     content_length = len(body)
     
