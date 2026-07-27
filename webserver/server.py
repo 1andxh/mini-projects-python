@@ -1,15 +1,13 @@
 import socket
 import time
+import threading
 
 conn = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
-
-
 conn.bind(("127.0.0.1", 8000))
 conn.listen(1)
 
-while True:
-    incoming_connection, client_address = conn.accept()
 
+def handle_client(incoming_connection, client_address):
     time.sleep(5)  # simulate blocking
 
     bytes_recv = incoming_connection.recv(256)
@@ -57,12 +55,18 @@ while True:
     response = f'HTTP/1.1 {status}\r\nContent-Length: {content_length}\r\n\r\n{body}'
     encoded_resp = response.encode()
 
-
-    print(repr(encoded_resp))
+    # print(repr(encoded_resp))
     incoming_connection.send(encoded_resp)
-
     print(bytes_recv)
     
     incoming_connection.close()
+    
+
+while True:
+    incoming_connection, client_address = conn.accept()
+    t = threading.Thread(target=handle_client, args=(incoming_connection, client_address))
+    t.start()
+
+    
 
 
