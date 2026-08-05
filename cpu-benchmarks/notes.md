@@ -70,3 +70,30 @@ the guard, that re-import would ALSO try to create p1/p2 again inside the child 
 which creates more children, which try to create more children... the guard makes sure
 "create these processes" only happens in the actual main run, not every time the file
 gets re-imported by a spawned child.
+
+
+---
+tested multiprocessing on the bcrypt hashing too, expecting it to beat threading like it
+did on the pure loop benchmark. it didn't - came out to ~1.6-1.9s, basically tied with
+threading's 1.54s, sometimes even a bit slower. ran it 5 times to make sure it wasn't a
+fluke, consistent every time.
+
+why: threading was ALREADY getting the parallelism benefit here because bcrypt releases
+the GIL. so multiprocessing wasn't unlocking anything new - it was just paying its usual
+spawn overhead (20 full separate interpreters) to solve a GIL problem that didn't
+actually exist for this workload.
+
+the real takeaway: multiprocessing isn't automatically "more powerful" than threading.
+it's worth the overhead specifically when the GIL IS the bottleneck (pure python compute,
+like my first benchmark). when the actual bottleneck work happens in C code that releases
+the GIL (bcrypt, and apparently a lot of the compiled python ecosystem - numpy, hashlib,
+etc), threading gets you the same parallelism for way less setup cost.
+
+so the real rule isn't "CPU-bound vs I/O-bound" like i first thought - it's "does this
+specific piece of work release the GIL while it runs." bcrypt happens to say yes even
+though it's CPU-bound. that's the nuance i was missing before.
+
+results so far:
+sequential: ~7s
+threaded:   ~1.54s
+multiproc:  ~1.6-1.9s
