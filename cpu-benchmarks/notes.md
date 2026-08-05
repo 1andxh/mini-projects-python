@@ -38,3 +38,35 @@ main thread hit the print statement and moved on before the actual work was anyw
 close to done. proved it by adding a print inside the worker function itself - the
 "completed at: " prints showed up a full 7+ seconds AFTER my timing already printed. classic case
 of measuring the starting line instead of the finish line.
+
+
+---
+
+Multiprocessing - tested multiprocessing.Process instead of threading.Thread for the same CPU-bound work.
+
+result: 4.6 seconds total (vs ~3s single-threaded, vs ~7s with threading). way better than
+threading, but not exactly 3s like i expected from "true parallelism" - why?
+
+because creating a PROCESS is expensive. a thread is cheap - just a new lane inside memory
+that already exists. a process is basically starting python fresh - its own interpreter,
+its own memory space, nothing shared with the parent by default. that setup cost eats into
+the total time. so what i actually measured was ~3s of real parallel computation + ~1.5s
+of process spawn overhead on top.
+
+the actual tradeoff:
+- threads: cheap to create, share memory easily, but GIL kills CPU-bound speedup
+- processes: genuinely parallel (own GIL each), no GIL fighting, but expensive to spin up
+  and don't share memory by default - need special tools (multiprocessing.Queue, shared
+  memory objects) if processes need to talk to each other
+
+so processes aren't "just better" - they trade GIL problems for spawn overhead and lost
+memory sharing. for a short task the overhead can eat most of the win. for a long task
+(minutes, not seconds) that same overhead becomes tiny by comparison and processes win big.
+
+also: multiprocessing needs `if __name__ == "__main__":` around the code that creates
+processes - threading didn't need this. reason: each new process basically re-runs the
+script from scratch as its own interpreter, re-importing the file top to bottom. without
+the guard, that re-import would ALSO try to create p1/p2 again inside the child process,
+which creates more children, which try to create more children... the guard makes sure
+"create these processes" only happens in the actual main run, not every time the file
+gets re-imported by a spawned child.
