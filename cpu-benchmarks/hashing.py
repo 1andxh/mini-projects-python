@@ -12,29 +12,29 @@ def hash_pass(password: str):
 passwords = [f"password{i}" for i in range(20)]
 
 # === SEQUENTIAL ===
-# start = time.perf_counter()
+start = time.perf_counter()
 
-# for password in passwords:
-#     hash_pass(password)
+for password in passwords:
+    hash_pass(password)
 
-# end = time.perf_counter()
-# print("SEQUENTILAL TOTAL: ", end - start)
+end = time.perf_counter()
+print("SEQUENTILAL TOTAL: ", end - start)
 
 
 # === THREADED ===
-# threads = []
-# start = time.perf_counter()
+threads = []
+start = time.perf_counter()
 
-# for password in passwords:
-#     t = threading.Thread(target=hash_pass, args=(password,))
-#     threads.append(t)
-#     t.start()
+for password in passwords:
+    t = threading.Thread(target=hash_pass, args=(password,))
+    threads.append(t)
+    t.start()
 
-# for t in threads:
-#     t.join()
+for t in threads:
+    t.join()
 
-# end = time.perf_counter()
-# print("THREADED TOTAL: ", end - start)
+end = time.perf_counter()
+print("THREADED TOTAL: ", end - start)
 
 
 # === MULTIPROCESSING === 
